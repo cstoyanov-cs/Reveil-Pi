@@ -1,7 +1,7 @@
-# Réveil Numérique Raspberry Pi
+# Projet Réveil-Pi
 
 ## Description
-Ce projet est un réveil numérique basé sur un Raspberry Pi 2. Il affiche l'heure en temps réel, gère deux alarmes configurables, et joue de la musique via MOC (Music On Console) pour les réveils, avec un buzzer comme option de secours en cas de panne audio. L'interface utilisateur repose sur un encodeur rotatif pour naviguer dans des menus intuitifs affichés sur un écran OLED. Le système est alimenté par un UPS HAT avec batteries pour une autonomie accrue en cas de coupure de courant.
+Ce projet est un réveil numérique basé sur un Raspberry Pi 2. Il affiche l'heure en temps réel, gère deux alarmes configurables, et joue de la musique et des webradios via MOC (Music On Console) pour les réveils, avec un buzzer comme option de secours en cas de panne audio. L'interface utilisateur repose sur un encodeur rotatif pour naviguer dans des menus intuitifs affichés sur un écran OLED. Le système est alimenté par un UPS HAT avec batteries pour une autonomie accrue en cas de coupure de courant.
 
 Le code Python est modulaire : il optimise les interruptions GPIO pour une réactivité fluide, utilise un cache pour l'heure afin de minimiser les lectures RTC, et inclut un mode veille pour économiser l'énergie. L'objectif est de fournir un réveil fiable et personnalisable, idéal pour un usage quotidien ou des projets DIY.
 
