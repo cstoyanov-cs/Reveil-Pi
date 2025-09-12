@@ -1,4 +1,3 @@
-```markdown
 # Réveil Numérique Raspberry Pi
 
 ## Description
@@ -34,25 +33,25 @@ Le code Python est modulaire : il optimise les interruptions GPIO pour une réac
 ## Prérequis Logiciels
 - Raspberry Pi OS Lite.
 - Bibliothèques Python installées via pip :
-  ```
+  ``` python
   pip install smbus2 rpi.lgpio luma.oled pillow
   ```
 - MOC (Music On Console) installé pour la lecture audio :
-  ```
+  ``` shell
   sudo apt install moc
   ```
 - Activez I2C sur le Raspberry Pi via `raspi-config` (Interface Options > I2C > Yes).
 
 ## Installation
 1. Clonez le dépôt GitHub :
-   ```
+   ``` shell
    git clone https://github.com/cstoyanov-cs/Reveil-Pi.git
    cd Reveil-Pi
    ```
 2. Installez les dépendances comme indiqué ci-dessus.
 3. Configurez MOC : Ajoutez vos fichiers musicaux dans un répertoire (ex. `/home/pi/Music`) et configurez MOC pour les jouer.
 4. Lancez le script principal :
-   ```
+   ``` python
    python main.py
    ```
 Pour un démarrage automatique au boot, creer un service.
@@ -75,4 +74,3 @@ Forkez le repo, modifiez, et soumettez une pull request. Signalez les bugs via i
 
 ## Licence
 MIT License – Utilisez librement, mais citez la source.
-```
