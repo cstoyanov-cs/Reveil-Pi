@@ -1,0 +1,16 @@
+{
+  "stations": [
+    {
+      "name": "France Inter",
+      "url": "https://icecast.radiofrance.fr/franceinter-midfi.mp3"
+    },
+    {
+      "name": "France Culture",
+      "url": "https://icecast.radiofrance.fr/franceculture-midfi.mp3"
+    },
+    {
+      "name": "FIP",
+      "url": "https://icecast.radiofrance.fr/fip-midfi.mp3"
+    }
+  ]
+}
