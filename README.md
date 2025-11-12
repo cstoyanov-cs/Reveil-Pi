@@ -1,76 +1,93 @@
-# Projet Réveil-Pi
+# Projet Réveil-Pi 🕰️
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 
 ## Description
-Ce projet est un réveil numérique basé sur un Raspberry Pi 2. Il affiche l'heure en temps réel, gère deux alarmes configurables, et joue de la musique et des webradios via MOC (Music On Console) pour les réveils, avec un buzzer comme option de secours en cas de panne audio. L'interface utilisateur repose sur un encodeur rotatif pour naviguer dans des menus intuitifs affichés sur un écran OLED. Le système est alimenté par un UPS HAT avec batteries pour une autonomie accrue en cas de coupure de courant.
+Ce projet est un réveil numérique basé sur un Raspberry Pi 2. Il affiche l'heure en temps réel via un module RTC DS3231, gère deux alarmes configurables (heure, fréquence, mode), et joue de la musique depuis une carte SD ou des webradios via MPD (Music Player Daemon) pour les réveils, avec un buzzer de secours en cas de panne audio. L'interface repose sur un encodeur rotatif KY-040 pour naviguer dans des menus intuitifs sur un écran OLED SH1106. Le système est alimenté par un UPS HAT Waveshare pour une autonomie en cas de coupure.
 
-Le code Python est modulaire : il optimise les interruptions GPIO pour une réactivité fluide, utilise un cache pour l'heure afin de minimiser les lectures RTC, et inclut un mode veille pour économiser l'énergie. L'objectif est de fournir un réveil fiable et personnalisable, idéal pour un usage quotidien ou des projets DIY.
+Le code Python est modulaire : interruptions GPIO optimisées pour réactivité, cache heure pour minimiser les lectures RTC, mode veille pour économie d'énergie, et persistance des configs (alarms dans RTC, params dans JSON).
 
 ## Fonctionnalités Principales
-- Affichage de l'heure et de la date sur écran OLED.
-- Configuration de deux alarmes indépendantes (heure, minute, activation/désactivation).
-- Lecture de musique via MOC pour les alarmes ; buzzer de secours si MOC échoue.
-- Navigation intuitive via encodeur rotatif : rotation pour sélectionner, appui pour valider.
-- Interrupteurs hardware pour activer/désactiver les alarmes manuellement.
-- Stockage des alarmes sur le module RTC pour persistance même après redémarrage.
-- Mode veille : écran éteint après inactivité, réactivé par interaction.
-- Surveillance de l'alimentation via UPS HAT.
+- Affichage heure/date sur OLED avec indicateurs (fréquence alarmes, source musique).
+- Deux alarmes indépendantes : configurable (HH:MM, T/S/WE, SD/Webradio/Buzzer) ; override hardware via switches.
+- Lecture audio : aléatoire/séquentiel SD, webradios (ex. France Inter) ; métadonnées affichées 15s.
+- Navigation : rotation (up/down), appui court (valider), long (retour/arrêt musique).
+- Persistance : alarmes stockées dans RTC (survie redémarrage) ; params système en `/home/pi/params.json`.
+- Veille : écran off après 30s inactivité ; réactivé par interaction.
+- Surveillance UPS : monitoring batterie (optionnel via script dédié).
 
 ## Matériel Requis
-- Raspberry Pi 2 (ou compatible).
-- Écran OLED SH1106 (128x64 pixels).
-- Module RTC DS3231 (I2C adresse 0x68, avec pile pour maintenir l'heure).
-- Buzzer
-- Encodeur rotatif KY-040.
-- Raspberry DAC Pro pour sortie audio I2S.
-- Amplificateur PAM8406 (stéréo, 3W par canal).
-- Enceintes stéréo 3W 8Ω (x2).
-- Waveshare Pi Hat UPS avec deux batteries 18650.
-- Interrupteurs ON/OFF (x2) pour activer/désactiver les alarmes.
-- Autres : boîtier en bois pour l'assemblage, cache pour enceintes.
+| **Raspberry Pi 2** | Micro-ordinateur principal.
+| **Écran OLED SH1106** | 128x64 pixels monochrome.
+| **RTC DS3231** | Horloge temps réel avec pile.
+| **Buzzer** | Mode d'alarme de secours si mpd est en erreur.
+| **Encodeur rotatif cliquable KY-040** | Navigation UI. |
+| **Raspberry DAC Pro** | Sortie audio. |
+| **Amplificateur PAM8406** | Stéréo 3W/canal. | - |
+| **Enceintes stéréo 3W 8Ω** | x2 haut-parleurs. | - |
+| **Waveshare Pi Hat UPS** | Alim 5V/5A avec 2x 18650.
+| **Interrupteurs ON/OFF** | Switches (x2) pour l'activation ou désactivation des deux alarmes.
 
-**Note :** Les connexions GPIO spécifiques ne sont pas détaillées ici ; reportez-vous au code pour les pins utilisés
+**Notes** : Jumpers MF pour KY-040/switches ; activez I2C via `raspi-config`. Boîtier DIY recommandé.
 
 ## Prérequis Logiciels
-- Raspberry Pi OS Lite.
-- Bibliothèques Python installées via pip :
-  ``` python
-  pip install smbus2 rpi.lgpio luma.oled pillow
+- Raspberry Pi OS Lite (basé Debian).
+- Python 3.8+ avec libs :
+  ```bash
+  pip install smbus2 RPi.GPIO luma.oled pillow
   ```
-- MOC (Music On Console) installé pour la lecture audio :
-  ``` shell
-  sudo apt install moc
+- MPD pour audio :
+  ```bash
+  sudo apt update && sudo apt install mpd mpc
   ```
-- Activez I2C sur le Raspberry Pi via `raspi-config` (Interface Options > I2C > Yes).
+- Activez I2C : `sudo raspi-config` > Interface Options > I2C > Yes.
 
 ## Installation
-1. Clonez le dépôt GitHub :
-   ``` shell
+1. Clonez le repo :
+   ```bash
    git clone https://github.com/cstoyanov-cs/Reveil-Pi.git
    cd Reveil-Pi
    ```
-2. Installez les dépendances comme indiqué ci-dessus.
-3. Configurez MOC : Ajoutez vos fichiers musicaux dans un répertoire (ex. `/home/pi/Music`) et configurez MOC pour les jouer.
-4. Lancez le script principal :
-   ``` python
+2. Installez dépendances (voir ci-dessus).
+3. Configurez MPD : Éditez `/etc/mpd.conf` pour socket local (`music_directory "/home/pi/Music"` ; ajoutez webradios dans `webradios.json`).
+4. Lancez :
+   ```bash
    python main.py
    ```
-Pour un démarrage automatique au boot, creer un service.
+5. Auto-démarrage : Créez un systemd service (ex. `/etc/systemd/system/reveil.service` avec `ExecStart=/usr/bin/python /path/to/main.py` ; `sudo systemctl enable reveil`).
 
 ## Utilisation
-- **Démarrage :** L'écran affiche l'heure actuelle. Tournez l'encodeur pour entrer en mode menu.
-- **Menus :**
-  - Configurer Alarme 1/2 : Sélectionnez heure/minute, activez/désactivez.
-  - Réglage de l'heure : Synchronisez avec le RTC si besoin.
-  - Sortie : Retour à l'affichage principal.
-- **Alarmes :** À l'heure programmée, MOC joue la musique. Appuyez sur l'encodeur pour arrêter. Si échec, buzzer sonne.
-- **Interrupteurs :** Position ON active l'alarme ; OFF la désactive (override software).
-- **Veille :** Écran s'éteint après 30 secondes d'inactivité ; rotation ou appui le réveille.
+- **Démarrage** : Affiche l'heure. Appui court sur encodeur → menu principal.
+- **Menus hiérarchiques** :
+  - **Réglage alarme** : Choisir A1/A2 → heure (HH:MM) → fréquence (T/S/WE) → mode (SD/Webradio/Buzzer) → station webradio.
+  - **Lire musique** : SD (aléatoire/parcourir) ou Webradio → sélection + contrôles (next/prev/pause).
+  - **Réglages** : Timeout écran/menu, synchroniser heure RTC.
+  - Retour : Appui long ou "Retour".
+- **Alarmes** : Déclenche à l'heure (check/minute). Stop par appui. Switches priorisent (override software).
+- **Veille** : Écran off 30s ; buzzer/Music allume temporairement.
 
+## Architecture Globale
+Le code est modulaire (`src/` : config, coordinator, components). Flux principal :
+1. **Init** (`main.py`) : GPIO/I2C → RTC/Display/Buzzer/Rotary → Time/Alarms/Audio → MenuManager → Coordinator.
+2. **Boucle (`coordinator.py`) : Lit RTC → check alarmes → events rotary → handle menu → render (heure/menu/infos) → veille.
+3. **Menus** : Centralisés via `MenuManager` (états globaux, transitions `_switch_to()`) ; chaque menu hérite `BaseMenu` (handle_input/render).
+4. **Audio** : MPD via `mpc` (SD aléatoire : `random on` ; webradio : add URL + buffer 2s).
+5. **Persistance** : Alarmes en registres RTC ; settings en JSON.
 
-Explications globales : Les interruptions GPIO assurent une réactivité immédiate sans polling constant, économisant CPU. Le cache heure rafraîchit toutes les secondes via timer. Les alarmes sont stockées en registre RTC pour persistance.
+Structure arborescente :
+```
+Reveil-Pi/
+├── main.py          # Entrée
+├── webradios.json   # Stations (ex. France Inter)
+├── src/
+│   ├── config/config.py     # Pins/timeouts
+│   ├── coordinator/coordinator.py  # Boucle
+│   └── components/          # I/O (i2c.py, rtc.py...), métier (alarms.py, audio_manager.py), menu/ (21 fichiers hiérarchiques)
+```
 
 ## Contribution
-Forkez le repo, modifiez, et soumettez une pull request. Signalez les bugs via issues.
+Forkez, modifiez (respectez patterns menus/alarms), testez sur Pi, PR avec description. Bugs ? Ouvrez une issue.
 
 ## Licence
-MIT License – Utilisez librement, mais citez la source.
+MIT – Utilisez librement, citez la source.

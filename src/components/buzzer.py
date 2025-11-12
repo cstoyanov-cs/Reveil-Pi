@@ -2,8 +2,10 @@ import RPi.GPIO as GPIO
 import time
 import threading
 
+
 class Buzzer:
     """Gère le buzzer du réveil."""
+
     def __init__(self, config: dict):
         self.pin = config["pin"]
         self.beep_duration = config["beep_duration"]
@@ -27,12 +29,12 @@ class Buzzer:
     def stop(self) -> None:
         self.active = False
         if self.thread and self.thread.is_alive():
-            self.thread.join()
+            self.thread.join(timeout=0.5)
         GPIO.output(self.pin, GPIO.LOW)
 
     def cleanup(self) -> None:
         try:
             self.stop()
             GPIO.setup(self.pin, GPIO.IN)
-        except:
+        except Exception:
             pass

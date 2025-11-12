@@ -1,4 +1,3 @@
-import time
 from .base_menu import BaseMenu
 
 
@@ -16,13 +15,13 @@ class SetAlarmMenu(BaseMenu):
         for event in events:
             button, event_type = event["button"], event["type"]
             if self.mode == "hour":
-                if button == "up" and event_type == "short_press":
+                if button == "down" and event_type == "short_press":
                     if self.alarm_number == 1:
                         self.manager.alarm1_hour = (self.manager.alarm1_hour + 1) % 24
                     else:
                         self.manager.alarm2_hour = (self.manager.alarm2_hour + 1) % 24
                     changed = True
-                elif button == "down" and event_type == "short_press":
+                elif button == "up" and event_type == "short_press":
                     if self.alarm_number == 1:
                         self.manager.alarm1_hour = (self.manager.alarm1_hour - 1) % 24
                     else:
@@ -35,7 +34,7 @@ class SetAlarmMenu(BaseMenu):
                     self.manager.current_menu = None
                     changed = True
             elif self.mode == "minute":
-                if button == "up" and event_type == "short_press":
+                if button == "down" and event_type == "short_press":
                     if self.alarm_number == 1:
                         self.manager.alarm1_minute = (
                             self.manager.alarm1_minute + 1
@@ -45,7 +44,7 @@ class SetAlarmMenu(BaseMenu):
                             self.manager.alarm2_minute + 1
                         ) % 60
                     changed = True
-                elif button == "down" and event_type == "short_press":
+                elif button == "up" and event_type == "short_press":
                     if self.alarm_number == 1:
                         self.manager.alarm1_minute = (
                             self.manager.alarm1_minute - 1
@@ -85,11 +84,7 @@ class SetAlarmMenu(BaseMenu):
                     self.manager.current_menu = None
                     changed = True
 
-        current_time = time.time()  # Ajoute import time si absent
-        if (
-            changed and current_time - self.last_render_time >= 0.1
-        ):  # 100ms min entre renders
-            self.last_render_time = current_time
+        if changed and self._should_render():
             self._render()
 
         if changed:

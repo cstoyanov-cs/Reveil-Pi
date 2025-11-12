@@ -2,6 +2,7 @@ import json
 import subprocess
 import time
 import os
+import re
 from .base_menu import BaseMenu
 
 WEBRADIOS_FILE = "/home/reveil/webradios.json"
@@ -16,6 +17,7 @@ class WebRadioMenu(BaseMenu):
         self.current_station_index = None
         self.last_info_time = 0
         self.current_info = "Chargement..."
+        self.last_render_time = 0  # Ajout pour debounce
 
     def load_stations(self):
         if not os.path.exists(WEBRADIOS_FILE):
@@ -24,44 +26,50 @@ class WebRadioMenu(BaseMenu):
             data = json.load(f)
         return data.get("stations", [])
 
+    def get_current_info(self):
+        if self.current_station_index is None:
+            return "Webradio\nStation: Inconnu\nTitre: Inconnu\n00:00/Streaming"
+        # Attendre 2s après changement de station pour métadonnées stables
+        if time.time() - self.last_info_time < 2.0:
+            return self.current_info  # Garde "Chargement..." ou dernier état
+        try:
+            # Récupérer status pour position
+            status_output = (
+                subprocess.check_output(["mpc", "status"], stderr=subprocess.PIPE)
+                .decode()
+                .strip()
+            )
+            # Parser temps avec regex (ex: 1:30/Streaming ou sans total)
+            time_match = re.search(r"(\d+:\d+)", status_output)
+            current = time_match.group(1) if time_match else "00:00"
+
+            # Récupérer titre
+            current_output = (
+                subprocess.check_output(
+                    ["mpc", "current", "--format", "%title%"],
+                    stderr=subprocess.PIPE,
+                )
+                .decode()
+                .strip()
+            )
+            title = (
+                current_output if current_output and current_output != "" else "Inconnu"
+            )
+
+            return f"Webradio\nStation: {self.stations[self.current_station_index]['name']}\nTitre: {title}\n{current}/Streaming"
+        except subprocess.CalledProcessError:
+            return "Webradio\nStation: Inconnu\nTitre: Inconnu\n00:00/Streaming"
+
     def play_station(self, index):
         if index >= len(self.stations):
             return
-        url = self.stations[index]["url"]
-        subprocess.Popen(
-            ["pkill", "-f", "mocp"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        time.sleep(0.05)  # Court délai pour pkill
-
-        # Démarrer le serveur MOCP
-        subprocess.Popen(["mocp", "-S"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        time.sleep(0.2)  # Délai pour laisser le serveur démarrer
-        subprocess.Popen(
-            ["mocp", "-a", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        subprocess.Popen(["mocp", "-p"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.manager.audio_manager.play_webradio_station(index)
         self.manager.music_source = "webradio"
         self.current_station_index = index
         self.manager.current_station_name = self.stations[index]["name"]
         self.manager.alarm_manager.music_playing = True  # Pour tracking global
-
-    def get_current_info(self):
-        if self.current_station_index is None:
-            return "Webradio\nStation: Inconnu\nTitre: Inconnu\n00:00/Streaming"
-        try:
-            output = subprocess.check_output(["mocp", "-i"]).decode().strip()
-            lines = output.split("\n")
-            info = {
-                line.split(": ", 1)[0]: line.split(": ", 1)[1]
-                for line in lines
-                if ": " in line
-            }
-            title = info.get("SongTitle", info.get("Title", "Inconnu"))
-            current = info.get("CurrentTime", "00:00")
-            total = info.get("TotalTime", "Streaming")
-            return f"Webradio\nStation: {self.stations[self.current_station_index]['name']}\nTitre: {title}\n{current}/{total}"
-        except Exception:
-            return "Webradio\nStation: Inconnu\nTitre: Inconnu\n00:00/Streaming"
+        self.current_info = "Chargement..."  # Reset à chaque nouvelle station
+        self.last_info_time = time.time()  # Reset timer pour délai
 
     def handle_input(self, events: list[dict], blink_interval: float) -> None:
         _ = blink_interval
@@ -86,7 +94,6 @@ class WebRadioMenu(BaseMenu):
                     self.play_station(prev_index)
                     changed = True
                     self.manager.current_station_index = prev_index
-
                 elif button == "menu" and event_type == "short_press":
                     self.manager._switch_to("MainMenu")  # Sans stop
                 elif button == "menu" and event_type == "long_press":
@@ -111,7 +118,6 @@ class WebRadioMenu(BaseMenu):
                         changed = True
                     else:
                         self.manager._switch_to("MusicSourceMenu")
-
         if (
             self.current_station_index is not None
             and current_time - self.last_info_time >= 1
@@ -119,8 +125,13 @@ class WebRadioMenu(BaseMenu):
             self.current_info = self.get_current_info()
             self.last_info_time = current_time
             changed = True
-
-        if changed:
+        # Remplacer if changed: self._render() par ceci
+        if (
+            changed
+            and self.manager.current_menu == self
+            and current_time - self.last_render_time >= 0.1
+        ):
+            self.last_render_time = current_time
             self._render()
 
     def _render(self) -> None:

@@ -13,13 +13,15 @@ class RotaryEncoder:
         self.long_press_duration = config["long_press_duration"]
         self.repeat_delay = config["repeat_delay"]
         self.events = []
-        self.last_status = None
         self.last_switch_status = None
         self.last_switch_time = 0
         self.switch_press_time = 0
         self.switch_pressed = False
         self.long_detected = False
         self._init_gpio()
+        self.last_status = (GPIO.input(self.pins["dt"]) << 1) | GPIO.input(
+            self.pins["clk"]
+        )
 
     def _init_gpio(self) -> None:
         """Initialise les broches GPIO avec RPi.GPIO."""
@@ -49,19 +51,19 @@ class RotaryEncoder:
             bouncetime=self.switch_debounce_ms,
         )
 
-    def _rotary_callback(self, channel):
+    def _rotary_callback(self, _channel):
         """Gère les changements sur CLK ou DT."""
         new_status = (GPIO.input(self.pins["dt"]) << 1) | GPIO.input(self.pins["clk"])
         if new_status == self.last_status:
             return
         transition = (self.last_status << 2) | new_status
         if transition == 0b1110:
-            self.events.append({"button": "up", "type": "short_press"})
-        elif transition == 0b1101:
             self.events.append({"button": "down", "type": "short_press"})
+        elif transition == 0b1101:
+            self.events.append({"button": "up", "type": "short_press"})
         self.last_status = new_status
 
-    def _switch_callback(self, channel):
+    def _switch_callback(self, _channel):
         """Gère les changements sur SW."""
         current_time = time.time()
         new_status = GPIO.input(self.pins["sw"])
@@ -92,8 +94,10 @@ class RotaryEncoder:
             and not self.long_detected
             and current_time - self.switch_press_time >= self.long_press_duration
         ):
-            events.append({"button": "menu", "type": "long_press"})
-            self.long_detected = True  # Flag pour éviter multiple et short après
+            if current_time - self.last_switch_time > 0.1:  #  Cooldown 100ms anti-spam
+                events.append({"button": "menu", "type": "long_press"})
+                self.last_switch_time = current_time
+            self.long_detected = True
         return events
 
     def cleanup(self) -> None:
@@ -102,5 +106,5 @@ class RotaryEncoder:
             GPIO.remove_event_detect(self.pins["clk"])
             GPIO.remove_event_detect(self.pins["dt"])
             GPIO.remove_event_detect(self.pins["sw"])
-        except:
+        except Exception:
             pass

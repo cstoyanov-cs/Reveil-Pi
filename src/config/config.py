@@ -15,13 +15,15 @@ CONFIG = {
     "display": {
         "font_path": "/usr/share/fonts/opentype/inconsolata/Inconsolata.otf",  # Chemin vers la police de caractères
         "font_sizes": {  # Tailles de police pour différents affichages
-            "time": 30,  # Taille pour l'affichage de l'heure
+            "time": 37,  # Taille pour l'affichage de l'heure
             "menu": 12,  # Taille pour les options des menus
-            "settings": 20,  # Taille pour les écrans de réglage
+            "settings": 23,  # Taille pour les écrans de réglage
             "freq": 12,  # Ajout : Taille pour les fréquences d'alarmes (petit texte)
+            "music_infos": 12,  # Nouvelle : Taille réduite pour infos musique (multiline)
         },
         "i2c_delay": 0.05,  # Delay post-I2C write en secondes (ajuste pour stabilité)
         "blink_interval": 0.5,  # Intervalle de clignotement pour les réglages (en secondes)
+        "temp_info_timeout": 15.0,  # Timeout affichage infos musique (secondes)
     },
     # Catégorie : Buzzer
     "buzzer": {
@@ -55,5 +57,7 @@ CONFIG = {
         "menu_timeout": 30,  # Temps inactivité avant quitter menu (secondes)
         "alarm_screen_on_time": 3600,  # Temps écran allumé pendant alarme (secondes, 1h)
         "alarm_max_duration": 7200,  # Temps max alarme active (secondes, 2h)
+        "playback_mode": "sequentiel",  # Mode lecture pour dossiers: "sequentiel" ou "aleatoire"
+        "last_sd_path": "/home/reveil/Musique",  # Dernier dossier parcouru pour Carte SD
     },
 }

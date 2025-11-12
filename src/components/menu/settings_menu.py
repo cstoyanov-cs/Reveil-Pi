@@ -1,4 +1,5 @@
 from .base_menu import BaseMenu
+from .ssh_menu import SSHMenu  # Ligne 45: Import pour get_ssh_status statique
 
 
 class SettingsMenu(BaseMenu):
@@ -10,6 +11,9 @@ class SettingsMenu(BaseMenu):
             "Temps menu (s)",
             "Temps écran alarme (s)",
             "Durée max alarme (s)",
+            "Lecture",
+            "Redémarrer le réveil",
+            "Service SSH",
             "Quitter",
         ]
         self.manager.selected_option = 0
@@ -72,7 +76,16 @@ class SettingsMenu(BaseMenu):
                         min_val=1800,
                         max_val=14400,
                     )
-                elif self.manager.selected_option == 5:
+                elif self.manager.selected_option == 5:  # Lecture
+                    self.manager._switch_to("PlaybackModeMenu")
+
+                elif self.manager.selected_option == 6:  # Redémarrer
+                    self.manager._switch_to("RestartMenu")
+
+                elif self.manager.selected_option == 7:  # Service SSH
+                    self.manager._switch_to("SSHMenu")
+
+                elif self.manager.selected_option == 8:
                     self.manager._switch_to("MainMenu")
                     self.manager.selected_option = 3  # Retour à "Paramètres" position
         if changed:
@@ -80,12 +93,20 @@ class SettingsMenu(BaseMenu):
 
     def _render(self) -> None:
         # Afficher options avec valeurs actuelles
+        mode_str = (
+            "Séquentiel"
+            if self.manager.settings["playback_mode"] == "sequentiel"
+            else "Aléatoire"
+        )  #  Défini ici, avant la liste
         opts_with_values = [
             f"Veille active: {'Oui' if self.manager.settings['screen_saver_enabled'] else 'Non'}",
             f"Temps veille: {self.format_time(self.manager.settings['screen_timeout'])}",
             f"Temps menu: {self.format_time(self.manager.settings['menu_timeout'])}",
             f"Écran alarme: {self.format_time(self.manager.settings['alarm_screen_on_time'])}",
             f"Max alarme: {self.format_time(self.manager.settings['alarm_max_duration'])}",
+            f"Mode lecture: {mode_str}",
+            "Redémarrer le réveil",  # Index 6 (statique, pas de valeur)
+            f"Service SSH: {'Activé' if SSHMenu.get_ssh_status() else 'Désactivé'}",  # Ligne 65: Appel statique
             "Quitter",
         ]
         self.display.show_menu(opts_with_values, self.manager.selected_option)

@@ -9,6 +9,7 @@ class MusicSourceMenu(BaseMenu):
         super().__init__(manager)
         self.options = ["Carte SD", "Webradio", "Retour"]
         self.manager.selected_option = 0  # Par défaut SD
+        self.last_render_time = 0  # Ajout pour debounce
 
     def handle_input(self, events: list[dict], blink_interval: float) -> None:
         self._update_blink(blink_interval)
@@ -28,23 +29,11 @@ class MusicSourceMenu(BaseMenu):
             elif button == "menu" and event_type == "short_press":
                 selected = self.manager.selected_option
                 if selected == 0:  # Carte SD
-                    self.manager.music_source = "sd"  # Track source
-                    self.manager.show_time_after_timeout = (
-                        False  # Réinitialiser timeout
-                    )
-                    if self.manager.audio_manager.play_random_music():  # Joue SD
-                        self.manager.music_start_time = time.time()
-                        self.manager.temp_info = self.manager.get_current_music_info()
-                        self.manager.temp_display_start = time.time()
-                    else:
-                        print("Erreur lecture SD")
-                    self.manager.current_menu = None  # Retour à normal
-                    self.manager._render()  # Force affichage
+                    self.manager._switch_to(
+                        "SDCardMenu"
+                    )  # Ouvre sous-menu sans switch auto
                 elif selected == 1:  # Webradio
                     self.manager.music_source = "webradio"
-                    self.manager.show_time_after_timeout = (
-                        False  # Réinitialiser timeout
-                    )
                     self.manager.current_station_index = 0  # Index par défaut
                     self.manager.current_station_name = (
                         self.manager.webradio_stations[0]["name"]
@@ -57,11 +46,13 @@ class MusicSourceMenu(BaseMenu):
                 elif selected == 2:  # Retour
                     self.manager._switch_to("MainMenu")
                 changed = True
-            elif button == "menu" and event_type == "long_press":
-                self.manager.alarm_manager.stop()  # Arrêt musique si en cours
-                self.manager.current_menu = None  # Retour à normal
-                changed = True
-        if changed:
+        current_time = time.time()
+        if (
+            changed
+            and self.manager.current_menu == self
+            and current_time - self.last_render_time >= 0.1
+        ):
+            self.last_render_time = current_time
             self._render()
 
     def _render(self) -> None:

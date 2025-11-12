@@ -158,9 +158,9 @@ class RTC:
         try:
             data = [
                 dow & 0x07,  # Binaire 1-7
-                self._bcd_to_decimal(date),
-                self._bcd_to_decimal(month),
-                self._bcd_to_decimal(year - 2000),
+                self._decimal_to_bcd(date),
+                self._decimal_to_bcd(month),
+                self._decimal_to_bcd(year - 2000),
             ]
             for i, value in enumerate(data):
                 self.i2c.write_byte(self.address, self.DAY_OF_WEEK_REG + i, value)

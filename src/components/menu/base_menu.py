@@ -17,6 +17,24 @@ class BaseMenu(ABC):
         self.blink_state: bool = True
         self.last_blink: float = time.time()
 
+    def _should_render(self) -> bool:
+        """
+        Limite les renders à 100ms minimum entre chaque.
+        Évite le flickering et surcharge I2C.
+        """
+        current_time = time.time()
+
+        # Initialise last_render_time si absent
+        if not hasattr(self, "last_render_time"):
+            self.last_render_time = 0
+
+        # Autorise render si 100ms écoulées
+        if current_time - self.last_render_time >= 0.1:
+            self.last_render_time = current_time
+            return True
+
+        return False
+
     @abstractmethod
     def handle_input(self, events: List[Dict[str, str]], blink_interval: float) -> None:
         """Traite les événements et gère les transitions."""
@@ -37,4 +55,3 @@ class BaseMenu(ABC):
             self.last_blink = current_time
             return True
         return False
-

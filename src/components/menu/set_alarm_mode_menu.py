@@ -18,7 +18,6 @@ class SetAlarmModeMenu(BaseMenu):
             self.manager.selected_option = 2
         else:
             self.manager.selected_option = 0
-        self._render()
 
     def handle_input(self, events: List[Dict[str, str]], blink_interval: float) -> None:
         super().handle_input(

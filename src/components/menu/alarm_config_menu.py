@@ -1,4 +1,3 @@
-import time
 from .base_menu import BaseMenu
 
 
@@ -46,11 +45,7 @@ class AlarmConfigMenu(BaseMenu):
                     )
                 elif self.manager.selected_option == 3:
                     self.manager._switch_to("AlarmSubMenu")
-        current_time = time.time()  # Import time en haut si absent
-        if (
-            changed and current_time - self.last_render_time >= 0.1
-        ):  # Debounce + limite 1 render
-            self.last_render_time = current_time
+        if changed and self._should_render():
             self._render()  # Seulement si changed et temps écoulé
 
     def _render(self) -> None:
